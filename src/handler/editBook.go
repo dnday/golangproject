@@ -1,73 +1,46 @@
 package handler
 
 import (
-	"context"
+	"bytes"
 	"encoding/json"
 	"net/http"
-	"time"
+	"strconv"
 
+	"github.com/dnday/go-backend-pelatihan-kmteti/src/service"
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Book struct {
-	ID    string  `json:"id" bson:"_id,omitempty"`
-	Title string  `json:"title" bson:"title"`
-	Stock int     `json:"stock" bson:"stock"`
-	Price float64 `json:"price" bson:"price"`
-}
-
-var client *mongo.Client
-
-func init() {
-	var err error
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
-	client, err = mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		panic(err)
+func UpdateBookHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
 	}
 
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func EditBookHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	bookID := vars["id"]
-
-	var updatedBook Book
-	err := json.NewDecoder(r.Body).Decode(&updatedBook)
+	bookID, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid book ID", http.StatusBadRequest)
 		return
 	}
 
-	collection := client.Database("mydb").Collection("books")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	filter := bson.M{"_id": bookID}
-	update := bson.M{
-		"$set": bson.M{
-			"stock": updatedBook.Stock,
-			"price": updatedBook.Price,
-		},
+	var bookReq service.BookRequest
+	if err := json.NewDecoder(r.Body).Decode(&bookReq); err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
 	}
 
-	var book Book
-	err = collection.FindOneAndUpdate(ctx, filter, update).Decode(&book)
-	if err == mongo.ErrNoDocuments {
-		http.Error(w, "Book not found", http.StatusNotFound)
+	bookReqBytes, err := json.Marshal(bookReq)
+	if err != nil {
+		http.Error(w, "Failed to encode request payload", http.StatusInternalServerError)
 		return
-	} else if err != nil {
+	}
+
+	err = service.UpdateBook(strconv.Itoa(bookID), bytes.NewReader(bookReqBytes))
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(book)
+	w.Write([]byte("Book updated successfully"))
 }

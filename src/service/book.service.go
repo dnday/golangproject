@@ -153,14 +153,49 @@ func AddBook(req io.Reader) error {
 	}
 	defer db.MongoDB.Client().Disconnect(context.TODO())
 
-	coll := db.MongoDB.Collection("product")
+	coll := db.MongoDB.Collection("book")
 	_, err = coll.InsertOne(context.TODO(), model.Book{
-		ID:     primitive.NewObjectID(),
 		Title:  bookReq.Title,
 		Author: bookReq.Author,
 		Stock:  bookReq.Stock,
 		Price:  bookReq.Price,
 	})
+	if err != nil {
+		log.Default().Println(err.Error())
+		return errors.New("internal server error")
+	}
+
+	return nil
+}
+
+func UpdateBook(bookID string, bookData io.Reader) error {
+	var bookReq BookRequest
+	err := json.NewDecoder(bookData).Decode(&bookReq)
+	if err != nil {
+		return errors.New("bad request")
+	}
+
+	db, err := db.DBConnection()
+	if err != nil {
+		log.Default().Println(err.Error())
+		return errors.New("internal server error")
+	}
+	defer db.MongoDB.Client().Disconnect(context.TODO())
+
+	coll := db.MongoDB.Collection("book")
+	objID, err := primitive.ObjectIDFromHex(bookID)
+	if err != nil {
+		return errors.New("invalid book ID")
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"stock": bookReq.Stock,
+			"price": bookReq.Price,
+		},
+	}
+
+	_, err = coll.UpdateOne(context.TODO(), bson.M{"_id": objID}, update)
 	if err != nil {
 		log.Default().Println(err.Error())
 		return errors.New("internal server error")
