@@ -203,3 +203,26 @@ func UpdateBook(bookID string, bookData io.Reader) error {
 
 	return nil
 }
+
+func DeleteBook(bookID string) error {
+	db, err := db.DBConnection()
+	if err != nil {
+		log.Default().Println(err.Error())
+		return errors.New("internal server error")
+	}
+	defer db.MongoDB.Client().Disconnect(context.TODO())
+
+	coll := db.MongoDB.Collection("book")
+	objID, err := primitive.ObjectIDFromHex(bookID)
+	if err != nil {
+		return errors.New("invalid book ID")
+	}
+
+	_, err = coll.DeleteOne(context.TODO(), bson.M{"_id": objID})
+	if err != nil {
+		log.Default().Println(err.Error())
+		return errors.New("internal server error")
+	}
+
+	return nil
+}

@@ -21,7 +21,6 @@ func main() {
 
 	h.HandleFunc("/api/listbooks", handler.ListBookHandler)
 	h.HandleFunc("/api/onebook", handler.OneBookHandler)
-	h.HandleFunc("/api/updatebook", handler.UpdateBookHandler)
 	// h.HandleFunc("api/book", getBook)
 	// h.HandleFunc("api/books", listBookHandler)
 	// h.HandleFunc("api/book/add", addBook)
