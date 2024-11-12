@@ -14,11 +14,12 @@ import (
 )
 
 type Book struct {
-	ID     string  `json:"id" bson:"id"`
-	Title  string  `json:"title" bson:"title"`
-	Author string  `json:"author" bson:"author"`
-	Stock  int     `json:"stock" bson:"stock"`
-	Price  float64 `json:"price" bson:"price"`
+	ID        string  `json:"id" bson:"_id"`
+	Title     string  `json:"title" bson:"title"`
+	Author    string  `json:"author" bson:"author"`
+	PrintYear int     `json:"printyear" bson:"printyear"`
+	Stock     int     `json:"stock" bson:"stock"`
+	Price     float64 `json:"price" bson:"price"`
 }
 
 type BookResponse struct {
@@ -36,43 +37,11 @@ type BookSummaryResponse struct {
 }
 
 type BookRequest struct {
-	Title  string  `json:"title"`
-	Author string  `json:"author"`
-	Stock  int     `json:"stock"`
-	Price  float64 `json:"price"`
-}
-
-func GetAllBook() (*BookResponse, error) {
-	db, err := db.DBConnection()
-	if err != nil {
-		log.Default().Println(err.Error())
-		return nil, errors.New("internal server error")
-	}
-	defer db.MongoDB.Client().Disconnect(context.TODO())
-
-	coll := db.MongoDB.Collection("book")
-	cur, err := coll.Find(context.TODO(), bson.D{})
-	if err != nil {
-		log.Default().Println(err.Error())
-		return nil, errors.New("internal server error")
-	}
-
-	var booksList []*Book
-
-	for cur.Next(context.TODO()) {
-		var books model.Book
-		cur.Decode(&books)
-		booksList = append(booksList, &Book{
-			ID:     books.ID.Hex(),
-			Title:  books.Title,
-			Author: books.Author,
-			Stock:  books.Stock,
-			Price:  books.Price,
-		})
-	}
-	return &BookResponse{
-		Data: booksList,
-	}, nil
+	Title     string  `json:"title"`
+	Author    string  `json:"author"`
+	PrintYear int     `json:"printyear"`
+	Stock     int     `json:"stock"`
+	Price     float64 `json:"price"`
 }
 
 func GetBookSummaries() (*BookSummaryResponse, error) {
@@ -106,7 +75,7 @@ func GetBookSummaries() (*BookSummaryResponse, error) {
 	}, nil
 }
 
-func GetBookDetail() (*BookResponse, error) {
+func GetBookByID(bookID string) (*Book, error) {
 	db, err := db.DBConnection()
 	if err != nil {
 		log.Default().Println(err.Error())
@@ -115,30 +84,53 @@ func GetBookDetail() (*BookResponse, error) {
 	defer db.MongoDB.Client().Disconnect(context.TODO())
 
 	coll := db.MongoDB.Collection("book")
-	cur, err := coll.Find(context.TODO(), bson.D{})
+	objID, err := primitive.ObjectIDFromHex(bookID)
+	if err != nil {
+		return nil, errors.New("invalid book ID")
+	}
+
+	var book model.Book
+	err = coll.FindOne(context.TODO(), bson.M{"_id": objID}).Decode(&book)
+	if err != nil {
+		log.Default().Println(err.Error())
+		return nil, errors.New("book not found")
+	}
+
+	return &Book{
+		Title:     book.Title,
+		Author:    book.Author,
+		PrintYear: book.PrintYear,
+		Price:     book.Price,
+		Stock:     book.Stock,
+	}, nil
+}
+
+func GetBookByTitle(bookTitle string) (*Book, error) {
+	db, err := db.DBConnection()
 	if err != nil {
 		log.Default().Println(err.Error())
 		return nil, errors.New("internal server error")
 	}
+	defer db.MongoDB.Client().Disconnect(context.TODO())
 
-	var booksList []*Book
+	coll := db.MongoDB.Collection("book")
+	objTitle := bookTitle
 
-	for cur.Next(context.TODO()) {
-		var books model.Book
-		cur.Decode(&books)
-		booksList = append(booksList, &Book{
-			ID:     books.ID.Hex(),
-			Title:  books.Title,
-			Author: books.Author,
-			Stock:  books.Stock,
-			Price:  books.Price,
-		})
+	var book model.Book
+	err = coll.FindOne(context.TODO(), bson.M{"title": objTitle}).Decode(&book)
+	if err != nil {
+		log.Default().Println(err.Error())
+		return nil, errors.New("book not found")
 	}
-	return &BookResponse{
-		Data: booksList,
+
+	return &Book{
+		Title:     book.Title,
+		Author:    book.Author,
+		PrintYear: book.PrintYear,
+		Price:     book.Price,
+		Stock:     book.Stock,
 	}, nil
 }
-
 func AddBook(req io.Reader) error {
 	var bookReq BookRequest
 	err := json.NewDecoder(req).Decode(&bookReq)
@@ -155,10 +147,11 @@ func AddBook(req io.Reader) error {
 
 	coll := db.MongoDB.Collection("book")
 	_, err = coll.InsertOne(context.TODO(), model.Book{
-		Title:  bookReq.Title,
-		Author: bookReq.Author,
-		Stock:  bookReq.Stock,
-		Price:  bookReq.Price,
+		Title:     bookReq.Title,
+		Author:    bookReq.Author,
+		PrintYear: bookReq.PrintYear,
+		Stock:     bookReq.Stock,
+		Price:     bookReq.Price,
 	})
 	if err != nil {
 		log.Default().Println(err.Error())

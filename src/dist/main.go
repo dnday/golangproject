@@ -19,8 +19,9 @@ func main() {
 		w.Write([]byte("Hello from Server!!"))
 	})
 
-	h.HandleFunc("/api/listbooks", handler.ListBookHandler)
+	h.HandleFunc("/api/books", handler.ListBookHandler)
 	h.HandleFunc("/api/onebook", handler.OneBookHandler)
+	h.HandleFunc("/api/employeelist", handler.EmployeeListHandler)
 	// h.HandleFunc("api/book", getBook)
 	// h.HandleFunc("api/books", listBookHandler)
 	// h.HandleFunc("api/book/add", addBook)
