@@ -124,6 +124,7 @@ func GetBookByTitle(bookTitle string) (*Book, error) {
 	}
 
 	return &Book{
+		ID:        book.ID.Hex(), // Ensure the ID is set correctly
 		Title:     book.Title,
 		Author:    book.Author,
 		PrintYear: book.PrintYear,
@@ -131,6 +132,7 @@ func GetBookByTitle(bookTitle string) (*Book, error) {
 		Stock:     book.Stock,
 	}, nil
 }
+
 func AddBook(req io.Reader) error {
 	var bookReq BookRequest
 	err := json.NewDecoder(req).Decode(&bookReq)
