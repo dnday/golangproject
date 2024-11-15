@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	handler "github.com/dnday/go-backend-pelatihan-kmteti/api"
-	"github.com/dnday/go-backend-pelatihan-kmteti/src/controller"
 )
 
 func main() {
@@ -20,7 +19,7 @@ func main() {
 		w.Write([]byte("Hello from Server!!"))
 	})
 
-	h.HandleFunc("/api/books", controller.ListBookHandler)
+	h.HandleFunc("/api/books", handler.ListBookHandler)
 	h.HandleFunc("/api/onebook", handler.OneBookHandler)
 
 	fmt.Println("HTTP Server running on port 8080")
