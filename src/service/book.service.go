@@ -75,6 +75,7 @@ func GetBookSummaries() (*BookSummaryResponse, error) {
 	}, nil
 }
 
+// Find ID and then you can get the book
 func GetBookByID(bookID string) (*Book, error) {
 	db, err := db.DBConnection()
 	if err != nil {
@@ -105,6 +106,7 @@ func GetBookByID(bookID string) (*Book, error) {
 	}, nil
 }
 
+// Find Title and then you can get the book
 func GetBookByTitle(bookTitle string) (*Book, error) {
 	db, err := db.DBConnection()
 	if err != nil {
