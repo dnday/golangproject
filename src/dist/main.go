@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dnday/go-backend-pelatihan-kmteti/src/handler"
+	handler "github.com/dnday/go-backend-pelatihan-kmteti/api"
+	"github.com/dnday/go-backend-pelatihan-kmteti/src/controller"
 )
 
 func main() {
@@ -19,16 +20,8 @@ func main() {
 		w.Write([]byte("Hello from Server!!"))
 	})
 
-	h.HandleFunc("/api/books", handler.ListBookHandler)
+	h.HandleFunc("/api/books", controller.ListBookHandler)
 	h.HandleFunc("/api/onebook", handler.OneBookHandler)
-	h.HandleFunc("/api/employeelist", handler.EmployeeListHandler)
-	// h.HandleFunc("api/book", getBook)
-	// h.HandleFunc("api/books", listBookHandler)
-	// h.HandleFunc("api/book/add", addBook)
-	// h.HandleFunc("api/book/update", updateBook)
-	// h.HandleFunc("api/book/delete", deleteBook)
-	// h.HandleFunc("api/employees", getEmployees)
-	// h.HandleFunc("api/employee/add", addEmployee)
 
 	fmt.Println("HTTP Server running on port 8080")
 	err := s.ListenAndServe()
