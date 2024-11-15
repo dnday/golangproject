@@ -21,6 +21,7 @@ func main() {
 
 	h.HandleFunc("/api/books", handler.ListBookHandler)
 	h.HandleFunc("/api/onebook", handler.OneBookHandler)
+	h.HandleFunc("/api/employees", handler.EmployeeListHandler)
 
 	fmt.Println("HTTP Server running on port 8080")
 	err := s.ListenAndServe()
